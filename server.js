@@ -15,50 +15,24 @@ app.use(function(req, res, next) {
   next()
 })
 
-// using helmet to protect http headers
+// using bcrypt for incryptin passords
+const bcrypt = require('bcrypt')
 
-const helmet = require('helmet')
+const plaintextPassword = 'hithere'
+const saltRounds = 13
 
-// to protect from knowing your stack
-app.use(helmet.hidePoweredBy({ setTo: 'PHP 4.2.0' }))
-
-// to protect against xss
-app.use(helmet.xssFilter({ action: 'deny' }))
-
-// to not allow http if you are using https, t in sec
-app.use(helmet.hsts({ maxAge: 10000000 }))
-
-// to stop browsers from caching
-app.use(helmet.noCache())
-
-// to stop IE from using untrusted html
-app.use(helmet.ieNoOpen())
-
-// to stop inferring the contect type
-app.use(helmet.noSniff())
-
-// for updated
-app.use(helmet.dnsPrefetchControl())
-
-// for content security policy and setting trusted
-app.use(
-  helmet.contentSecurityPolicy({
-    directives: {
-      defaultSrc: ["'self'"],
-      scriptSrc: ["'self'", 'other web sites']
-    }
+// async
+bcrypt.hash(plaintextPassword, saltRounds, function(err, encHash) {
+  console.log(encHash) // $2b$13$T82Lqb5PUWz89HpFLelOFuGRa.WFXyqqgQQmvJUeBtAzv5anun/n2
+  bcrypt.compare(plaintextPassword, encHash, function(err, same) {
+    console.log(same)
   })
-)
+})
 
-// all of these middlewares except noCache and CSP  can
-// be set only by using helmet(), then we can modify it
-app.use(
-  helmet({
-    contentSecurityPolicy: false,
-    noCache: true,
-    xssFilter: { action: 'deny' }
-  })
-)
+// sync
+const hash = bcrypt.hashSync(plaintextPassword, saltRounds)
+const same = bcrypt.compareSync(plaintextPassword, hash)
+console.log(hash, same) // $2b$13$BJe1CnyrqgfkNYGRi1aC0Oj06wGsuEc7aA3qkhxP1V9KYvG.NQHmO
 
 // static files
 app.use(express.static(path.join(__dirname, 'public')))
@@ -67,6 +41,6 @@ app.get('/', function(req, res) {
 })
 
 // running the server
-app.listen(process.env.PORT, function() {
-  console.log(`Server running at port ${process.env.PORT}`)
-})
+// app.listen(process.env.PORT, function() {
+//   console.log(`Server running at port ${process.env.PORT}`)
+// })

@@ -1,54 +1,62 @@
 'use strict'
 
-const express = require('express')
-const bodyParser = require('body-parser')
-const cookieParser = require('cookie-parser')
+var bodyParser = require('body-parser')
+var expect = require('chai').expect
+const helmet = require('helmet')
+var cors = require('cors')
 
+var fccTestingRoutes = require('./routes/fcctesting.js')
+var apiRoutes = require('./routes/api.js')
+var runner = require('./test-runner')
 require('dotenv').config()
-const auth = require('./auth.js')
-const passport = require('passport')
-const routes = require('./routes.js')
-const session = require('express-session')
 
-const app = express()
-const http = require('http').Server(app)
-const mongo = require('mongodb').MongoClient
-const sessionStore = new session.MemoryStore()
+var express = require('express')
+var app = express()
 
-app.use(cookieParser())
+app.use(cors({ origin: '*' })) //For FCC testing purposes only
+
 app.use(bodyParser.json())
 app.use(bodyParser.urlencoded({ extended: true }))
 
-app.set('view engine', 'pug')
+//
+app.use(helmet.noSniff())
+app.use(helmet.xssFilter())
+
+// Index page (static HTML and files)
 app.use('/public', express.static(process.cwd() + '/public'))
+app.route('/').get(function(req, res) {
+  res.sendFile(process.cwd() + '/views/index.html')
+})
 
-app.use(
-  session({
-    secret: process.env.SESSION_SECRET,
-    resave: true,
-    saveUninitialized: true,
-    key: 'express.sid',
-    store: sessionStore
-  })
-)
+//For FCC testing purposes
+fccTestingRoutes(app)
 
-mongo.connect(
-  process.env.DB_URI,
+//Routing for API
+apiRoutes(app)
 
-  { useNewUrlParser: true, useUnifiedTopology: true },
+//404 Not Found Middleware
+app.use(function(req, res, next) {
+  res
+    .status(404)
+    .type('text')
+    .send('Not Found')
+})
 
-  function(err, db) {
-    if (err) console.log('Database error: ' + err)
-
-    console.log('DB connected')
-
-    auth(app, db)
-    routes(app, db)
-
-    http.listen(process.env.PORT || 3000)
-
-    //start socket.io code
-
-    //end socket.io code
+// Start our server and tests!
+app.listen(process.env.PORT || 3000, function() {
+  console.log('Listening on port ' + process.env.PORT)
+  if (process.env.NODE_ENV === 'test') {
+    console.log('Running Tests...')
+    setTimeout(function() {
+      try {
+        runner.run()
+      } catch (e) {
+        var error = e
+        console.log('Tests are not valid:')
+        console.log(error)
+      }
+    }, 1500)
   }
-)
+})
+
+module.exports = app //for testing

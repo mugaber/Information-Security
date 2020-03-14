@@ -2,7 +2,7 @@
 
 var bodyParser = require('body-parser')
 var expect = require('chai').expect
-const helmet = require('helmet')
+var helmet = require('helmet')
 var cors = require('cors')
 
 var fccTestingRoutes = require('./routes/fcctesting.js')
@@ -13,28 +13,40 @@ require('dotenv').config()
 var express = require('express')
 var app = express()
 
-app.use(cors({ origin: '*' })) //For FCC testing purposes only
+const mongoose = require('mongoose')
+
+mongoose.connect(process.env.DB_URI, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true
+})
+
+const db = mongoose.connection
+db.on('error', () => console.log('DB connection error'))
+db.once('connected', () => console.log('DB connection successful'))
+
+app.use(helmet.noSniff())
+app.use(helmet.xssFilter())
+app.use(helmet())
 
 app.use(bodyParser.json())
 app.use(bodyParser.urlencoded({ extended: true }))
+app.use(cors({ origin: '*' }))
 
-//
-app.use(helmet.noSniff())
-app.use(helmet.xssFilter())
-
-// Index page (static HTML and files)
 app.use('/public', express.static(process.cwd() + '/public'))
+
 app.route('/').get(function(req, res) {
   res.sendFile(process.cwd() + '/views/index.html')
 })
 
-//For FCC testing purposes
+//Sample front-end
+app.route('/:project/').get(function(req, res) {
+  res.sendFile(process.cwd() + '/views/issue.html')
+})
+
 fccTestingRoutes(app)
 
-//Routing for API
 apiRoutes(app)
 
-//404 Not Found Middleware
 app.use(function(req, res, next) {
   res
     .status(404)
@@ -42,7 +54,6 @@ app.use(function(req, res, next) {
     .send('Not Found')
 })
 
-// Start our server and tests!
 app.listen(process.env.PORT || 3000, function() {
   console.log('Listening on port ' + process.env.PORT)
   if (process.env.NODE_ENV === 'test') {
@@ -55,7 +66,7 @@ app.listen(process.env.PORT || 3000, function() {
         console.log('Tests are not valid:')
         console.log(error)
       }
-    }, 1500)
+    }, 3500)
   }
 })
 

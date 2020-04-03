@@ -24,6 +24,7 @@
     "passport": "^0.4.1",
     "passport-github": "^1.1.0",
     "passport-local": "^1.0.0",
+    "passport.socketio": "^3.7.0",
     "pug": "^2.0.4",
     "socket.io": "^2.3.0",
     "zombie": "^6.1.4"

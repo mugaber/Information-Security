@@ -2,7 +2,6 @@
 
 const express = require('express')
 const passport = require('passport')
-const helmet = require('helmet')
 const bodyParser = require('body-parser')
 const session = require('express-session')
 const cookieParser = require('cookie-parser')
@@ -18,7 +17,6 @@ const io = require('socket.io')(http)
 const sessionStore = new session.MemoryStore()
 
 app.use(cookieParser())
-app.use(helmet())
 app.use(bodyParser.json())
 app.use(bodyParser.urlencoded({ extended: true }))
 

@@ -26,7 +26,7 @@
     "passport-local": "^1.0.0",
     "passport.socketio": "^3.7.0",
     "pug": "^2.0.4",
-    "socket.io": "^2.3.0",
+    "socket.io": "^2.4.0",
     "zombie": "^6.1.4"
   },
   "devDependencies": {
